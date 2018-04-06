@@ -1,16 +1,23 @@
+#![feature(const_fn)]
+
+#![allow(dead_code)]
+
 extern crate sdl2;
 extern crate rand;
+extern crate screen_sdl2;
 
-mod screen;
+mod sdf;
 
 use sdl2::pixels::Color;
-use screen::{ColorPoint, Screen};
+use screen_sdl2::{ColorPoint, Screen};
 use rand::Rng;
+use sdf::{SDF, Circle, Node};
+use sdf::polygonal::Polygonal;
 
 const TWO_PI: f32 = 6.28318530718;
 const W: u32 = 512;
 const H: u32 = 512;
-const N: u32 = 256;
+const N: u32 = 128;
 const MAX_STEP: u32 = 10;
 const MAX_DISTANCE: f32 = 2.0;
 const EPSILON: f32 = 1e-6;
@@ -20,39 +27,78 @@ pub fn main() {
     screen.clear(Color::RGB(0, 0, 0)).unwrap();
     for y in 0..H {
         for x in 0..W {
-            let c = (sample(x as f32 / W as f32, y as f32/ H as f32) * 255.0f32).min(255.0f32) as u8;
+            let c = if "exactly" == std::env::args().last().unwrap() {
+                (sample_exactly(x as f32 / W as f32, y as f32/ H as f32) * 255.0f32).min(255.0f32) as u8
+            } else {
+                (sample(&Node::new(x as f32 / W as f32, y as f32/ H as f32)) * 255.0f32).min(255.0f32) as u8
+            };
             screen.draw(ColorPoint::new((x, y), (c, c, c))).unwrap();
         }
     }
     screen.join().unwrap();
 }
 
-fn sample(x: f32, y: f32) -> f32 {
+fn sample_exactly(x: f32, y: f32) -> f32 {
+    let d = ((x - 0.5).powi(2) + (y - 0.5).powi(2)).sqrt();
+    const EMISSIVE: f32 = 2.0;
+    if d < 0.1 {
+        EMISSIVE
+    } else {
+        EMISSIVE *  (0.1 / d).asin() * 2.0 / TWO_PI
+    }
+}
+
+fn sample(p: &Node) -> f32 {
     let mut sum = 0.0f32;
     let mut rng = rand::thread_rng();
     for i in 0..N {
         let a = TWO_PI * (i as f32 + rng.gen::<f32>()) / N as f32;
-        sum += trace(x, y, a.cos(), a.sin());
+        sum += trace(p, &Node::new(a.cos(), a.sin()));
     }
-    return sum / N as f32;
+    sum / N as f32
+
 }
 
-fn trace(ox: f32, oy: f32, dx: f32, dy: f32) -> f32 {
+#[derive(Clone, Copy)]
+struct Res {
+    sd: f32,
+    emissive: f32
+}
+
+fn union_op(a: Res, b: Res) -> Res {
+    if a.sd < b.sd { a } else { b }
+}
+
+fn scene(p: &Node) -> Res {
+    static C1: Circle = Circle::new(0.3, 0.3, 0.1);
+    static C2: Circle = Circle::new(0.8, 0.8, 0.05);
+    static P1: [Node; 3] = [Node::new(0.5, 0.7), Node::new(0.7, 0.5), Node::new(0.5, 0.5)];
+    let t1: Polygonal = Polygonal(&P1);
+    let r1 = Res {
+        sd: C1.sdf(p),
+        emissive: 2.0
+    };
+    let r2 = Res {
+        sd: t1.sdf(p),
+        emissive: 0.0
+    };
+    let r3 = Res {
+        sd: C2.sdf(p),
+        emissive: 2.0
+    };
+    union_op(union_op(r1, r2), r3)
+}
+
+fn trace(o: &Node, d: &Node) -> f32 {
     let mut t = 0.0f32;
     let mut i = 0;
     while i < MAX_STEP && t < MAX_DISTANCE {
-        let sd = circle_sdf(ox + dx * t, oy + dy * t, 0.5, 0.5, 0.1);
-        if sd < EPSILON {
-            return 2.0;
+        let r = scene(&(o + d * t));
+        if r.sd < EPSILON {
+            return r.emissive;
         }
-        t += sd;
+        t += r.sd;
         i += 1;
     }
     0.0
-}
-
-fn circle_sdf(x: f32, y: f32, cx: f32, cy: f32, r: f32) ->f32 {
-    let ux = x - cx;
-    let uy = y - cy;
-    (ux * ux + uy * uy).sqrt() - r
 }
