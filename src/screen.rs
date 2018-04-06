@@ -12,9 +12,9 @@ pub struct ColorPoint {
 }
 
 impl ColorPoint {
-    pub fn new((x, y): (i32, i32), (r, g, b): (u8, u8, u8)) -> Self {
+    pub fn new((x, y): (u32, u32), (r, g, b): (u8, u8, u8)) -> Self {
         ColorPoint {
-            point: Point::new(x, y),
+            point: Point::new(x as i32, y as i32),
             color: Color::RGB(r, g, b)
         }
     }
