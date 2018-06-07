@@ -6,4 +6,6 @@ authors = ["刘斯哲 <xiaobao20090101@126.com>"]
 [dependencies]
 sdl2 = "0.31"
 rand = "0.4.2"
-screen-sdl2 = { path = "../screen-sdl2" }
+
+[dependencies.screen-sdl2]
+path = "../screen-sdl2"
