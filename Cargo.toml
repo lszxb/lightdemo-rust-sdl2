@@ -8,4 +8,4 @@ sdl2 = "0.31"
 rand = "0.4.2"
 
 [dependencies.screen-sdl2]
-path = "../screen-sdl2"
+path = "screen-sdl2"
