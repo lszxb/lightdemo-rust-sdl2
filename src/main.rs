@@ -12,7 +12,7 @@ use sdl2::pixels::Color;
 use screen_sdl2::{ColorPoint, Screen};
 use rand::Rng;
 use sdf::{SDF, Circle, Node};
-use sdf::polygonal::Polygonal;
+use sdf::polygonal::PolygonalCapsule;
 
 const TWO_PI: f32 = 6.28318530718;
 const W: u32 = 512;
@@ -72,15 +72,15 @@ fn union_op(a: Res, b: Res) -> Res {
 fn scene(p: &Node) -> Res {
     static C1: Circle = Circle::new(0.3, 0.3, 0.1);
     static C2: Circle = Circle::new(0.8, 0.8, 0.05);
-    static P1: [Node; 3] = [Node::new(0.5, 0.7), Node::new(0.7, 0.5), Node::new(0.5, 0.5)];
-    let t1: Polygonal = Polygonal(&P1);
+    static P1: [Node; 3] = [Node::new(0.3, 0.8), Node::new(0.6, 0.7), Node::new(0.5, 0.5)];
+    let t1 = PolygonalCapsule(&P1, 0.01);
     let r1 = Res {
         sd: C1.sdf(p),
         emissive: 2.0
     };
     let r2 = Res {
         sd: t1.sdf(p),
-        emissive: 0.0
+        emissive: 1.0
     };
     let r3 = Res {
         sd: C2.sdf(p),

@@ -42,3 +42,16 @@ impl<'a> SDF for Polygonal<'a> {
     }
 }
 
+pub struct PolygonalCapsule<'a>(pub &'a [Node], pub f32);
+
+impl<'a> SDF for PolygonalCapsule<'a> {
+    fn sdf(&self, p: &Node) -> f32 {
+        let mut d: f32 = 1.0 / EPSILON;
+        for i in 0..self.0.len() - 1 {
+            d = d.min(Capsule(Line(&self.0[i], &self.0[i+1]), self.1).sdf(p));
+        }
+        d = d.min(Capsule(Line(&self.0[self.0.len()-1], &self.0[0]), self.1).sdf(p));
+
+        d //TODO: change unsigned to signed
+    }
+}
