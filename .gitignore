@@ -4,3 +4,6 @@
 Cargo.lock
 .vscode
 .idea
+run.bat
+*.png
+/cmake-build-debug

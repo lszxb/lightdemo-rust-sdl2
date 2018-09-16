@@ -1,3 +1,7 @@
 [submodule "screen-sdl2"]
 	path = screen-sdl2
 	url = ./screen-sdl2
+
+[submodule "screen-image"]
+	path = screen-image
+	url = ./screen-image

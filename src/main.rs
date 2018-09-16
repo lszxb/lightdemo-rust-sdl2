@@ -2,14 +2,15 @@
 
 #![allow(dead_code)]
 
-extern crate sdl2;
 extern crate rand;
-extern crate screen_sdl2;
+#[cfg(feature = "output_sdl2")]
+extern crate screen_sdl2 as output_screen;
+#[cfg(feature = "output_image")]
+extern crate screen_image as output_screen;
 
 mod sdf;
 
-use sdl2::pixels::Color;
-use screen_sdl2::{ColorPoint, Screen};
+use output_screen::{ColorPoint, Screen, RGBColor};
 use rand::Rng;
 use sdf::{SDF, Circle, Node};
 use sdf::polygonal::PolygonalCapsule;
@@ -23,8 +24,8 @@ const MAX_DISTANCE: f32 = 2.0;
 const EPSILON: f32 = 1e-6;
 
 pub fn main() {
-    let screen = Screen::new("sdl2 test", W, H);
-    screen.clear(Color::RGB(0, 0, 0)).unwrap();
+    let mut screen = Screen::new("sdl2 test", W, H);
+    screen.clear(RGBColor(0, 0, 0)).unwrap();
     for y in 0..H {
         for x in 0..W {
             let c = if "exactly" == std::env::args().last().unwrap() {
@@ -65,8 +66,11 @@ struct Res {
     emissive: f32
 }
 
-fn union_op(a: Res, b: Res) -> Res {
-    if a.sd < b.sd { a } else { b }
+impl std::ops::BitAnd for Res {
+    type Output = Res;
+    fn bitand(self, rhs: Res) -> Self::Output {
+        if self.sd < rhs.sd { self } else { rhs }
+    }
 }
 
 fn scene(p: &Node) -> Res {
@@ -86,7 +90,7 @@ fn scene(p: &Node) -> Res {
         sd: C2.sdf(p),
         emissive: 2.0
     };
-    union_op(union_op(r1, r2), r3)
+    r1 & r2 & r3
 }
 
 fn trace(o: &Node, d: &Node) -> f32 {

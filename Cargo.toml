@@ -3,9 +3,18 @@ name = "test-sdl2"
 version = "0.1.0"
 authors = ["刘斯哲 <xiaobao20090101@126.com>"]
 
+[features]
+default = ["output_image"]
+output_image = ["screen-image"]
+output_sdl2 = ["screen-sdl2"]
+
 [dependencies]
-sdl2 = "0.31"
 rand = "0.4.2"
 
 [dependencies.screen-sdl2]
 path = "screen-sdl2"
+optional = true
+
+[dependencies.screen-image]
+path = "screen-image"
+optional = true

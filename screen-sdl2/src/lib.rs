@@ -7,6 +7,15 @@ use sdl2::rect::Point;
 use std::time::Duration;
 use std::sync::mpsc;
 
+#[derive(Copy, Clone)]
+pub struct RGBColor(pub u8, pub u8, pub u8);
+
+impl Into<Color> for RGBColor {
+    fn into(self) -> Color {
+        Color::RGB(self.0, self.1, self.2)
+    }
+}
+
 #[derive(Clone)]
 pub struct ColorPoint {
     point: Point,
@@ -87,12 +96,12 @@ impl Screen {
         }
     }
 
-    pub fn draw(&self, p: ColorPoint) -> Result<(), mpsc::SendError<Task>> {
+    pub fn draw(&mut self, p: ColorPoint) -> Result<(), mpsc::SendError<Task>> {
         self.cx.send(Task::DrawPoint(p))
     }
 
-    pub fn clear(&self, c: Color) -> Result<(), mpsc::SendError<Task>> {
-        self.cx.send(Task::Clear(c))
+    pub fn clear(&mut self, c: RGBColor) -> Result<(), mpsc::SendError<Task>> {
+        self.cx.send(Task::Clear(c.into()))
     }
 
     pub fn join(self) -> ::std::thread::Result<()> {
